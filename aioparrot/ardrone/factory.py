@@ -102,3 +102,6 @@ class CommandFactory(object):
 
     def auto(self, start=True):
         return self.format('AFLIGHT', [int(start)])
+
+    def ping(self):
+        return self.format('COMWDG', [])
