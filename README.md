@@ -1,6 +1,8 @@
 # aioparrot
 
 [![Circle CI](https://img.shields.io/circleci/project/thavel/aioparrot/master.svg)](https://circleci.com/gh/thavel/aioparrot)
+[![pypi version](http://img.shields.io/pypi/v/aioparrot.svg)](https://pypi.python.org/pypi/aioparrot)
+[![python versions](https://img.shields.io/pypi/pyversions/aioparrot.svg)](https://pypi.python.org/pypi/aioparrot/)
 
 Asyncio (PEP-3156) based project to control Parrot drones.
 
