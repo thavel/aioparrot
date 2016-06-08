@@ -17,3 +17,15 @@ Upcoming support:
 ## Credits
 
 * [venthur](https://github.com/venthur)/[python-ardrone](https://github.com/venthur/python-ardrone)
+
+
+## ARDrone client API
+
+```python
+client = drone(Device.ARDRONE2)
+await client.start()
+await client.takeoff()
+await client.left()
+await client.land()
+await client.stop()
+```

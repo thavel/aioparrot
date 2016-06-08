@@ -1,5 +1,3 @@
-#!/bin/bash
-
 echo -e "[distutils]
 index-servers=pypi
 [pypi]
