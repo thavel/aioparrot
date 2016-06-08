@@ -21,8 +21,30 @@ class _Protocol(object):
     def __init__(self, loop):
         self.loop = loop
         self._transport = None
-        self._factory = CommandFactory()
         self._timer = None
+        self._ceiling = 5000
+        self._factory = CommandFactory()
+
+    @property
+    def speed(self):
+        return self._factory.speed
+
+    @speed.setter
+    def speed(self, value):
+        self._factory.speed = value
+
+    @property
+    def ceiling(self):
+        return self._ceiling
+
+    @ceiling.setter
+    def ceiling(self, value):
+        self._ceiling = value
+        self._altitude()
+
+    @property
+    def duration(self):
+        return asyncio.sleep(self.speed * 20)
 
     def connection_made(self, transport):
         self._transport = transport
@@ -52,33 +74,120 @@ class _Protocol(object):
 
     def _start_timer(self):
         when = self.loop.time() + self.WATCHDOG
-        self._timer = self.loop.call_at(when, self.ping)
+        self._timer = self.loop.call_at(when, self._ping)
 
-    def ping(self):
+    def _ping(self):
         data = self._factory.ping()
+        self.send(data)
+
+    def _altitude(self):
+        data = self._factory.altitude(self._ceiling)
+        self.send(data)
+
+    def trim(self):
+        data = self._factory.trim()
+        self.send(data)
+
+    def panic(self):
+        data = self._factory.emergency()
+        self.send(data)
+
+    def auto(self, start=True):
+        data = self._factory.auto(start)
         self.send(data)
 
     async def halt(self):
         data = self._factory.emergency()
         self.send(data)
 
+    async def takeoff(self):
+        self.trim()
+        self._altitude()
+        data = self._factory.takeoff()
+        self.send(data)
+        await self.duration
 
-class Client(object):
+    async def land(self):
+        data = self._factory.land()
+        self.send(data)
+        await self.duration
+
+    async def hover(self):
+        data = self._factory.hover()
+        self.send(data)
+        await self.duration
+
+    async def left(self, unit=1):
+        data = self._factory.left(unit)
+        self.send(data)
+        await self.duration
+
+    async def right(self, unit=1):
+        data = self._factory.left(unit)
+        self.send(data)
+        await self.duration
+
+    async def forward(self, unit=1):
+        data = self._factory.left(unit)
+        self.send(data)
+        await self.duration
+
+    async def backward(self, unit=1):
+        data = self._factory.left(unit)
+        self.send(data)
+        await self.duration
+
+    async def down(self, unit=1):
+        data = self._factory.left(unit)
+        self.send(data)
+        await self.duration
+
+    async def up(self, unit=1):
+        data = self._factory.left(unit)
+        self.send(data)
+        await self.duration
+
+    async def turn_left(self, unit=1):
+        data = self._factory.left(unit)
+        self.send(data)
+        await self.duration
+
+    async def turn_right(self, unit=1):
+        data = self._factory.left(unit)
+        self.send(data)
+        await self.duration
+
+
+class Client(asyncio.Future):
 
     DRONE_ADDR = '192.168.1.1'
 
-    def __init__(self, loop=None):
-        self.loop = loop or asyncio.get_event_loop()
-        self.transport = None
-        self.protocol = None
+    def __init__(self, *, loop=None):
+        super().__init__(loop=loop)
+        self._transport = None
+        self._protocol = None
+
+    @property
+    def transport(self):
+        return self._transport
+
+    @property
+    def protocol(self):
+        return self._protocol
 
     async def start(self):
-        future = self.loop.create_datagram_endpoint(
-            lambda: _Protocol(self.loop),
+        future = self._loop.create_datagram_endpoint(
+            lambda: _Protocol(self._loop),
             remote_addr=(self.DRONE_ADDR, Port.COMMAND.value)
         )
-        self.transport, self.protocol = await future
+        self._transport, self._protocol = await future
 
     async def stop(self):
-        await self.protocol.halt()
-        self.transport.close()
+        await self._protocol.halt()
+        self._transport.close()
+
+    def __getattribute__(self, name):
+        try:
+            return super().__getattribute__(name)
+        except AttributeError:
+            return getattr(self._protocol, name)

@@ -1,9 +1,8 @@
 import asyncio
 import logging
 
-from aioparrot import Device, Drone
+from aioparrot import Device, drone
 from aioparrot.ardrone.factory import CommandFactory
-from aioparrot.ardrone.client import Client
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -11,10 +10,8 @@ log = logging.getLogger(__name__)
 
 
 async def main():
-    drone = Drone(Device.ARDRONE2)
-    log.info("SDK version %s", drone.device.sdk)
-
     factory = CommandFactory()
+    log.info("SDK version %s", Device.ARDRONE2.sdk)
     log.info("Altitude: %s", factory.altitude(3000))
     log.info("Hover: %s", factory.hover())
     log.info("Left: %s", factory.left())
@@ -32,11 +29,13 @@ async def main():
     log.info("Auto off: %s", factory.auto(False))
     log.info("Ping: %s", factory.ping())
 
-    client = Client()
+    client = drone(Device.ARDRONE2)
     await client.start()
-    await asyncio.sleep(5)
-    await client.protocol.halt()
-    await client.protocol.halt()
+    await asyncio.sleep(3)
+    await client.takeoff()
+    await client.left()
+    await client.land()
+    await client.stop()
 
 
 if __name__ == "__main__":

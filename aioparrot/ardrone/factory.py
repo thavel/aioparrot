@@ -33,7 +33,7 @@ class CommandFactory(object):
     """
     ARDrone 1 and 2 controller.
     """
-    def __init__(self, speed=0.1):
+    def __init__(self, speed=0.2):
         self._seq = 0
         self.speed = speed
 
@@ -46,8 +46,8 @@ class CommandFactory(object):
         params = [str(self.get_seq)] + [parrot_str(value) for value in data]
         return 'AT*{}={}\r'.format(command, ','.join(params))
 
-    def altitude(self, max=5000):
-        return self.format('CONFIG', ['control:altitude_max', str(max)])
+    def altitude(self, max_alt):
+        return self.format('CONFIG', ['control:altitude_max', str(max_alt)])
 
     @action
     def takeoff(self):

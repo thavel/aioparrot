@@ -1,2 +1,2 @@
 from aioparrot.devices import Device
-from aioparrot.drone import Drone
+from aioparrot.drone import drone
