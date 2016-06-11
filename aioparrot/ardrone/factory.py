@@ -65,36 +65,36 @@ class CommandFactory(object):
         return [0, 0, 0, 0]
 
     @move(progressive=True)
-    def left(self, unit=1):
-        return [-(self.speed * unit), 0, 0, 0]
+    def left(self):
+        return [-self.speed, 0, 0, 0]
 
     @move(progressive=True)
-    def right(self, unit=1):
-        return [self.speed * unit, 0, 0, 0]
+    def right(self):
+        return [self.speed, 0, 0, 0]
 
     @move(progressive=True)
-    def forward(self, unit=1):
-        return [0, -(self.speed * unit), 0, 0]
+    def forward(self):
+        return [0, -self.speed, 0, 0]
 
     @move(progressive=True)
-    def backward(self, unit=1):
-        return [0, self.speed * unit, 0, 0]
+    def backward(self):
+        return [0, self.speed, 0, 0]
 
     @move(progressive=True)
-    def down(self, unit=1):
-        return [0, 0, -(self.speed * unit), 0]
+    def down(self):
+        return [0, 0, -self.speed, 0]
 
     @move(progressive=True)
-    def up(self, unit=1):
-        return [0, 0, self.speed * unit, 0]
+    def up(self):
+        return [0, 0, self.speed, 0]
 
     @move(progressive=True)
-    def turn_left(self, unit=1):
-        return [0, 0, 0, -(self.speed * unit)]
+    def turn_left(self):
+        return [0, 0, 0, -self.speed]
 
     @move(progressive=True)
-    def turn_right(self, unit=1):
-        return [0, 0, 0, self.speed * unit]
+    def turn_right(self):
+        return [0, 0, 0, self.speed]
 
     @action
     def emergency(self):
