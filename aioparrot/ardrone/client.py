@@ -8,6 +8,12 @@ from aioparrot.ardrone.factory import CommandFactory
 log = logging.getLogger(__name__)
 
 
+def move(func):
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+    return wrapper
+
+
 class Port(IntEnum):
     NAVDATA = 5554
     VIDEO = 5555
@@ -29,16 +35,14 @@ class _Protocol(object):
     def speed(self):
         return self._factory.speed
 
-    @speed.setter
-    def speed(self, value):
+    def set_speed(self, value):
         self._factory.speed = value
 
     @property
     def ceiling(self):
         return self._ceiling
 
-    @ceiling.setter
-    def ceiling(self, value):
+    def set_ceiling(self, value):
         self._ceiling = value
         self._altitude()
 
@@ -112,46 +116,55 @@ class _Protocol(object):
         self.send(data)
         await self.duration
 
+    @move
     async def hover(self):
         data = self._factory.hover()
         self.send(data)
         await self.duration
 
+    @move
     async def left(self, unit=1):
         data = self._factory.left(unit)
         self.send(data)
         await self.duration
 
+    @move
     async def right(self, unit=1):
-        data = self._factory.left(unit)
+        data = self._factory.right(unit)
         self.send(data)
         await self.duration
 
+    @move
     async def forward(self, unit=1):
-        data = self._factory.left(unit)
+        data = self._factory.forward(unit)
         self.send(data)
         await self.duration
 
+    @move
     async def backward(self, unit=1):
-        data = self._factory.left(unit)
+        data = self._factory.backward(unit)
         self.send(data)
         await self.duration
 
+    @move
     async def down(self, unit=1):
-        data = self._factory.left(unit)
+        data = self._factory.down(unit)
         self.send(data)
         await self.duration
 
+    @move
     async def up(self, unit=1):
-        data = self._factory.left(unit)
+        data = self._factory.up(unit)
         self.send(data)
         await self.duration
 
+    @move
     async def turn_left(self, unit=1):
         data = self._factory.left(unit)
         self.send(data)
         await self.duration
 
+    @move
     async def turn_right(self, unit=1):
         data = self._factory.left(unit)
         self.send(data)
