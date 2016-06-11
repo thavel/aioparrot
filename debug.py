@@ -30,9 +30,12 @@ async def main():
     # log.info("Ping: %s", factory.ping())
 
     client = drone(Device.ARDRONE2)
+    client.ceiling = 10
+    client.speed = 0.2
+
     await client.start()
     await client.takeoff()
-    await asyncio.sleep(5)
+    await asyncio.sleep(3)
     await client.land()
     await client.stop()
 

@@ -3,6 +3,7 @@ import logging
 from enum import IntEnum
 
 from aioparrot.ardrone.factory import CommandFactory
+from aioparrot.ardrone.utils import Options
 
 
 log = logging.getLogger(__name__)
@@ -24,31 +25,17 @@ class _Protocol(object):
 
     WATCHDOG = 1.0
 
-    def __init__(self, loop):
+    def __init__(self, loop, opt):
         self.loop = loop
         self._transport = None
         self._timer = None
         self._ceiling = 5000
         self._factory = CommandFactory()
-
-    @property
-    def speed(self):
-        return self._factory.speed
-
-    def set_speed(self, value):
-        self._factory.speed = value
-
-    @property
-    def ceiling(self):
-        return self._ceiling
-
-    def set_ceiling(self, value):
-        self._ceiling = value
-        self._altitude()
+        self._options = opt
 
     @property
     def duration(self):
-        return asyncio.sleep(self.speed * 20)
+        return asyncio.sleep(self._options.speed * 20)
 
     def connection_made(self, transport):
         self._transport = transport
@@ -84,8 +71,8 @@ class _Protocol(object):
         data = self._factory.ping()
         self.send(data)
 
-    def _altitude(self):
-        data = self._factory.altitude(self._ceiling)
+    def altitude(self, value):
+        data = self._factory.altitude(value)
         self.send(data)
 
     def trim(self):
@@ -106,7 +93,7 @@ class _Protocol(object):
 
     async def takeoff(self):
         self.trim()
-        self._altitude()
+        self.altitude(self._options.ceiling)
         data = self._factory.takeoff()
         self.send(data)
         await self.duration
@@ -124,49 +111,49 @@ class _Protocol(object):
 
     @move
     async def left(self, unit=1):
-        data = self._factory.left(unit)
+        data = self._factory.left(self._options.speed)
         self.send(data)
         await self.duration
 
     @move
     async def right(self, unit=1):
-        data = self._factory.right(unit)
+        data = self._factory.right(self._options.speed)
         self.send(data)
         await self.duration
 
     @move
     async def forward(self, unit=1):
-        data = self._factory.forward(unit)
+        data = self._factory.forward(self._options.speed)
         self.send(data)
         await self.duration
 
     @move
     async def backward(self, unit=1):
-        data = self._factory.backward(unit)
+        data = self._factory.backward(self._options.speed)
         self.send(data)
         await self.duration
 
     @move
     async def down(self, unit=1):
-        data = self._factory.down(unit)
+        data = self._factory.down(self._options.speed)
         self.send(data)
         await self.duration
 
     @move
     async def up(self, unit=1):
-        data = self._factory.up(unit)
+        data = self._factory.up(self._options.speed)
         self.send(data)
         await self.duration
 
     @move
     async def turn_left(self, unit=1):
-        data = self._factory.left(unit)
+        data = self._factory.left(self._options.speed)
         self.send(data)
         await self.duration
 
     @move
     async def turn_right(self, unit=1):
-        data = self._factory.left(unit)
+        data = self._factory.left(self._options.speed)
         self.send(data)
         await self.duration
 
@@ -179,6 +166,7 @@ class Client(asyncio.Future):
         super().__init__(loop=loop)
         self._transport = None
         self._protocol = None
+        self._options = Options()
 
     @property
     def transport(self):
@@ -188,9 +176,27 @@ class Client(asyncio.Future):
     def protocol(self):
         return self._protocol
 
+    @property
+    def speed(self):
+        return self._options.speed
+
+    @property
+    def ceiling(self):
+        return self._options.ceiling
+
+    @speed.setter
+    def speed(self, value):
+        self._options.speed = value
+
+    @ceiling.setter
+    def ceiling(self, value):
+        self._options.ceiling = value
+        if self._protocol:
+            self._protocol.altitude(self._options.ceiling)
+
     async def start(self):
         future = self._loop.create_datagram_endpoint(
-            lambda: _Protocol(self._loop),
+            lambda: _Protocol(self._loop, self._options),
             remote_addr=(self.DRONE_ADDR, Port.COMMAND.value)
         )
         self._transport, self._protocol = await future

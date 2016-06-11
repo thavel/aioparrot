@@ -17,3 +17,30 @@ def parrot_str(value):
     if isinstance(value, str):
         value = '"{}"'.format(value)
     return str(value)
+
+
+class Options:
+
+    def __init__(self):
+        self._speed = 0.2
+        self._ceiling = 5
+
+    @property
+    def speed(self):
+        return self._speed
+
+    @speed.setter
+    def speed(self, value):
+        if value > 1:
+            raise ValueError("Speed can't exceed 1")
+        self._speed = value
+
+    @property
+    def ceiling(self):
+        return self._ceiling
+
+    @ceiling.setter
+    def ceiling(self, value):
+        if value > 1000:
+            raise ValueError("Max altitude can't exceed 1km")
+        self._ceiling = value

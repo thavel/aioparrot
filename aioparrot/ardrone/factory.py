@@ -33,9 +33,8 @@ class CommandFactory(object):
     """
     ARDrone 1 and 2 controller.
     """
-    def __init__(self, speed=0.2):
+    def __init__(self):
         self._seq = 0
-        self.speed = speed
 
     @property
     def get_seq(self):
@@ -46,8 +45,9 @@ class CommandFactory(object):
         params = [str(self.get_seq)] + [parrot_str(value) for value in data]
         return 'AT*{}={}\r'.format(command, ','.join(params))
 
-    def altitude(self, max_alt):
-        return self.format('CONFIG', ['control:altitude_max', str(max_alt)])
+    def altitude(self, meters):
+        meters *= 1000
+        return self.format('CONFIG', ['control:altitude_max', str(meters)])
 
     @action
     def takeoff(self):
@@ -65,36 +65,36 @@ class CommandFactory(object):
         return [0, 0, 0, 0]
 
     @move(progressive=True)
-    def left(self):
-        return [-self.speed, 0, 0, 0]
+    def left(self, speed):
+        return [-speed, 0, 0, 0]
 
     @move(progressive=True)
-    def right(self):
-        return [self.speed, 0, 0, 0]
+    def right(self, speed):
+        return [speed, 0, 0, 0]
 
     @move(progressive=True)
-    def forward(self):
-        return [0, -self.speed, 0, 0]
+    def forward(self, speed):
+        return [0, -speed, 0, 0]
 
     @move(progressive=True)
-    def backward(self):
-        return [0, self.speed, 0, 0]
+    def backward(self, speed):
+        return [0, speed, 0, 0]
 
     @move(progressive=True)
-    def down(self):
-        return [0, 0, -self.speed, 0]
+    def down(self, speed):
+        return [0, 0, -speed, 0]
 
     @move(progressive=True)
-    def up(self):
-        return [0, 0, self.speed, 0]
+    def up(self, speed):
+        return [0, 0, speed, 0]
 
     @move(progressive=True)
-    def turn_left(self):
-        return [0, 0, 0, -self.speed]
+    def turn_left(self, speed):
+        return [0, 0, 0, -speed]
 
     @move(progressive=True)
-    def turn_right(self):
-        return [0, 0, 0, self.speed]
+    def turn_right(self, speed):
+        return [0, 0, 0, speed]
 
     @action
     def emergency(self):
