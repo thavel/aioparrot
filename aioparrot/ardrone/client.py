@@ -48,15 +48,16 @@ class _Protocol(object):
         # Beforehand
         if self._timer:
             self._timer.cancel()
+        data_seq = data.format(self._factory.seq)
 
         # Stop condition
         if not self._transport:
-            log.error("Command stream can't send: %s", data)
+            log.error("Command stream can't send: %s", data_seq)
             return
 
         # Data sending
-        self._transport.sendto(data.encode())
-        log.debug("Command stream sent: %s", data)
+        self._transport.sendto(data_seq.encode())
+        log.debug("Command stream sent: %s", data_seq)
 
         # Schedule next data sending
         if until:

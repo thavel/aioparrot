@@ -37,12 +37,12 @@ class CommandFactory(object):
         self._seq = 0
 
     @property
-    def get_seq(self):
+    def seq(self):
         self._seq += 1
         return self._seq
 
     def format(self, command, data):
-        params = [str(self.get_seq)] + [parrot_str(value) for value in data]
+        params = ['{}'] + [parrot_str(value) for value in data]
         return 'AT*{}={}\r'.format(command, ','.join(params))
 
     def altitude(self, meters):
