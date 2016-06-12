@@ -3,16 +3,10 @@ import logging
 from enum import IntEnum
 
 from aioparrot.ardrone.factory import CommandFactory
-from aioparrot.ardrone.utils import Options
+from aioparrot.ardrone.utils import Options, BoundedFuture
 
 
 log = logging.getLogger(__name__)
-
-
-def move(func):
-    def wrapper(*args, **kwargs):
-        return func(*args, **kwargs)
-    return wrapper
 
 
 class Port(IntEnum):
@@ -29,13 +23,10 @@ class _Protocol(object):
         self.loop = loop
         self._transport = None
         self._timer = None
-        self._ceiling = 5000
+        self._move_duration = None
+
         self._factory = CommandFactory()
         self._options = opt
-
-    @property
-    def duration(self):
-        return asyncio.sleep(self._options.speed * 20)
 
     def connection_made(self, transport):
         self._transport = transport
@@ -53,19 +44,46 @@ class _Protocol(object):
     def error_received(self, exc):
         log.error("Command stream received an error: %s", str(exc))
 
-    def send(self, data):
+    def send(self, data, until=None):
+        # Beforehand
         if self._timer:
             self._timer.cancel()
+
+        # Stop condition
         if not self._transport:
             log.error("Command stream can't send: %s", data)
             return
+
+        # Data sending
         self._transport.sendto(data.encode())
         log.debug("Command stream sent: %s", data)
-        self._start_timer()
 
-    def _start_timer(self):
+        # Schedule next data sending
+        if until:
+            if not isinstance(until, BoundedFuture):
+                until = BoundedFuture(until)
+            if self.loop.time() <= until.deadline:
+                # Schedule next call
+                self._start_timer(self.send, data, until)
+            else:
+                # End the future and resume periodic ping
+                until.set_result(None)
+                self._start_timer()
+        else:
+            # Next periodic ping
+            self._start_timer()
+
+        # None or awaitable future
+        return until
+
+    def _start_timer(self, callback=None, *args, **kwargs):
+        """
+        Schedule a callback after the value (in seconds) of the watchdog.
+        Default behavior: send a ping.
+        """
+        cb = (lambda: callback(*args, **kwargs)) if callback else self._ping
         when = self.loop.time() + self.WATCHDOG
-        self._timer = self.loop.call_at(when, self._ping)
+        self._timer = self.loop.call_at(when, cb)
 
     def _ping(self):
         data = self._factory.ping()
@@ -90,72 +108,55 @@ class _Protocol(object):
     async def halt(self):
         data = self._factory.emergency()
         self.send(data)
+        await asyncio.sleep(1)
 
     async def takeoff(self):
         self.trim()
         self.altitude(self._options.ceiling)
         data = self._factory.takeoff()
         self.send(data)
-        await self.duration
+        await asyncio.sleep(5)
 
     async def land(self):
         data = self._factory.land()
         self.send(data)
-        await self.duration
-
-    @move
-    async def hover(self):
+        await asyncio.sleep(3)
+    
+    async def hover(self, duration=1):
         data = self._factory.hover()
-        self.send(data)
-        await self.duration
+        await self.send(data, duration)
 
-    @move
-    async def left(self, unit=1):
+    async def left(self, duration=1):
         data = self._factory.left(self._options.speed)
-        self.send(data)
-        await self.duration
-
-    @move
-    async def right(self, unit=1):
+        await self.send(data, duration)
+    
+    async def right(self, duration=1):
         data = self._factory.right(self._options.speed)
-        self.send(data)
-        await self.duration
-
-    @move
-    async def forward(self, unit=1):
+        await self.send(data, duration)
+    
+    async def forward(self, duration=1):
         data = self._factory.forward(self._options.speed)
-        self.send(data)
-        await self.duration
-
-    @move
-    async def backward(self, unit=1):
+        await self.send(data, duration)
+    
+    async def backward(self, duration=1):
         data = self._factory.backward(self._options.speed)
-        self.send(data)
-        await self.duration
-
-    @move
-    async def down(self, unit=1):
+        await self.send(data, duration)
+    
+    async def down(self, duration=1):
         data = self._factory.down(self._options.speed)
-        self.send(data)
-        await self.duration
-
-    @move
-    async def up(self, unit=1):
+        await self.send(data, duration)
+    
+    async def up(self, duration=1):
         data = self._factory.up(self._options.speed)
-        self.send(data)
-        await self.duration
-
-    @move
-    async def turn_left(self, unit=1):
-        data = self._factory.left(self._options.speed)
-        self.send(data)
-        await self.duration
-
-    @move
-    async def turn_right(self, unit=1):
-        data = self._factory.left(self._options.speed)
-        self.send(data)
-        await self.duration
+        await self.send(data, duration)
+    
+    async def turn_left(self, duration=1):
+        data = self._factory.turn_left(self._options.speed)
+        await self.send(data, duration)
+    
+    async def turn_right(self, duration=1):
+        data = self._factory.turn_right(self._options.speed)
+        await self.send(data, duration)
 
 
 class Client(asyncio.Future):

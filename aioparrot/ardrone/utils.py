@@ -1,4 +1,11 @@
 import struct
+import asyncio
+
+
+class BoundedFuture(asyncio.Future):
+    def __init__(self, duration, *, loop=None):
+        super().__init__(loop=loop)
+        self.deadline = self._loop.time() + duration
 
 
 def floating_point(value):
