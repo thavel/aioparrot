@@ -17,7 +17,7 @@ class Port(IntEnum):
 
 class _Protocol(object):
 
-    WATCHDOG = 1.0
+    WATCHDOG = 0.2
 
     def __init__(self, loop, opt):
         self.loop = loop
