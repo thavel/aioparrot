@@ -117,6 +117,7 @@ class _Protocol(object):
         data = self._factory.takeoff()
         self.send(data)
         await asyncio.sleep(5)
+        self.trim()
 
     async def land(self):
         data = self._factory.land()
